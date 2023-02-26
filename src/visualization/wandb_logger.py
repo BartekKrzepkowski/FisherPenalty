@@ -8,7 +8,7 @@ class WandbLogger:
         # self.api_token = "07a2cd842a6d792d578f8e6c0978efeb8dcf7638"
         # self.project = f"DistilHerBERT"
         self.api_token = config.logger_config['api_token']
-        self.project = config.logger_config['project']
+        self.project = config.logger_config['project_name']
         self.wandb = wandb
         self.wandb.login(key=self.api_token)
         if not os.path.isdir(config.logger_config['log_dir']):

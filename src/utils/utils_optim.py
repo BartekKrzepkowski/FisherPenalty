@@ -1,7 +1,7 @@
 import torch
 
 
-def get_parameter_names(model, forbidden_layer_types):
+def get_every_but_forbidden_parameter_names(model, forbidden_layer_types):
     """
     Returns the names of the model parameters that are not inside a forbidden layer.
     """
@@ -9,7 +9,7 @@ def get_parameter_names(model, forbidden_layer_types):
     for name, child in model.named_children():
         result += [
             f"{name}.{n}"
-            for n in get_parameter_names(child, forbidden_layer_types)
+            for n in get_every_but_forbidden_parameter_names(child, forbidden_layer_types)
             if not isinstance(child, tuple(forbidden_layer_types))
         ]
     # Add model specific parameters (defined with nn.Parameter) since they are not in any child.
@@ -21,8 +21,8 @@ def configure_optimizer(optim_wrapper, model, optim_kwargs):
     weight_decay = optim_kwargs['weight_decay']
     del optim_kwargs['weight_decay']
 
-    decay_parameters = get_parameter_names(model, [torch.nn.LayerNorm, torch.nn.Embedding,
-                                                   torch.nn.BatchNorm1d, torch.nn.BatchNorm2d])
+    decay_parameters = get_every_but_forbidden_parameter_names(model, [torch.nn.LayerNorm, torch.nn.Embedding,
+                                                                       torch.nn.BatchNorm1d, torch.nn.BatchNorm2d])
     decay_parameters = [name for name in decay_parameters if "bias" not in name]
     optimizer_grouped_parameters = [
         {

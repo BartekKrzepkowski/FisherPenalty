@@ -13,13 +13,10 @@ class FisherPenaly(torch.nn.Module):
         idx_sampled = prob.multinomial(1)
         y_sampled = self.labels[idx_sampled].long().squeeze()
         loss = self.criterion(y_pred, y_sampled)
-        grads = torch.autograd.grad(
-            loss,
-            [p for n, p in self.model.named_parameters() if p.requires_grad],
-            retain_graph=True,
-            create_graph=True)
-        gr_norm_sq = 0.0
-        for gr in grads:
-            if gr is not None:
-                gr_norm_sq += (gr**2).sum()
-        return gr_norm_sq
+        loss.backward(retain_graph=True) # can't use create_graph
+        trace = 0.0
+        for param in self.model.parameters():
+            if param.requires_grad and param.grad is not None:
+                trace += (param.grad ** 2).sum()
+        self.model.zero_grad()
+        return trace

@@ -1,6 +1,7 @@
 import torch
 
 from src.utils.prepare import prepare_model, prepare_loaders, prepare_criterion, prepare_optim_and_scheduler
+from src.utils.utils_visualisation import ee_tensorboard_layout
 from src.trainer.trainer_classification import TrainerClassification
 from src.trainer.trainer_context import TrainerContext
 
@@ -9,15 +10,15 @@ def objective():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # prepare model
-    NUM_FEATURES = 32 * 32 * 3
+    NUM_FEATURES = 3
     NUM_CLASSES = 10
-    DIMS = [NUM_FEATURES, 512, 512, NUM_CLASSES]
-    model_params = {'layers_dim':  DIMS, 'activation_name': 'relu'}
-    model = prepare_model('simplecnn', model_params=model_params).to(device)
+    DIMS = [NUM_FEATURES, 32, 64, 64, 128, NUM_CLASSES]
+    model_params = {'layers_dim':  DIMS, 'activation_name': 'relu', 'norm_name': 'layer_norm'}
+    model = prepare_model('simple_cnn_norm', model_params=model_params).to(device)
 
     # prepare criterion
     criterion_params = {'model': model, 'general_criterion_name': 'ce', 'num_classes': NUM_CLASSES,
-                        'whether_record_trace': True, 'fpw': 1e-2}
+                        'whether_record_trace': True, 'fpw': 1e-2} # fpw: 1e-2
     criterion = prepare_criterion('fp', criterion_params)
 
     # prepare loaders
@@ -43,7 +44,8 @@ def objective():
     trainer = TrainerClassification(**params_trainer)
 
     # prepare run
-    EXP_NAME = 'simple_cnn_cifar10_sgd_fp'
+    EXP_NAME = 'simple_cnn_batchnorm2d_cifar10_sgd_fp_traces'
+    params_names = [n for n, p in model.named_parameters() if p.requires_grad]
     config = TrainerContext(
         epoch_start_at=0,
         epoch_end_at=EPOCHS,
@@ -53,7 +55,7 @@ def objective():
         clip_value=0.0,
         base_path='reports',
         exp_name=EXP_NAME,
-        logger_config={'logger_name': 'tensorboard'},
+        logger_config={'logger_name': 'tensorboard', 'layout': ee_tensorboard_layout(params_names)},
         random_seed=42,
         device=device
     )

@@ -1,9 +1,10 @@
 import torch
 
 from src.data.datasets import get_mnist, get_cifar10, get_cifar100, get_tinyimagenet
-from src.models.losses import ClassificationLoss, FisherPenalyLoss
-from src.models.models import MLP, SimpleCNN
-from src.models.resnets import ResNet18, ResNet34
+from src.modules.losses import ClassificationLoss, FisherPenaltyLoss
+from src.modules.architectures.models import MLP, SimpleCNN, SimpleCNNNorm
+from src.modules.architectures.resnets import ResNet18, ResNet34
+from src.visualization.clearml_logger import ClearMLLogger
 from src.visualization.tensorboard_pytorch import TensorboardPyTorch
 from src.visualization.wandb_logger import WandbLogger
 
@@ -23,6 +24,7 @@ DATASET_NAME_MAP = {
 }
 
 LOGGERS_NAME_MAP = {
+    'clearml': ClearMLLogger,
     'tensorboard': TensorboardPyTorch,
     'wandb': WandbLogger
 }
@@ -32,14 +34,24 @@ LOSS_NAME_MAP = {
     'cls': ClassificationLoss,
     'nll': torch.nn.NLLLoss,
     'mse': torch.nn.MSELoss,
-    'fp': FisherPenalyLoss
+    'fp': FisherPenaltyLoss
 }
 
 MODEL_NAME_MAP = {
     'mlp': MLP,
-    'simplecnn': SimpleCNN,
+    'simple_cnn': SimpleCNN,
+    'simple_cnn_norm': SimpleCNNNorm,
     'resnet18': ResNet18,
     'resnet34': ResNet34
+}
+
+NORM_LAYER_NAME_MAP = {
+    'bn1d': torch.nn.BatchNorm1d,
+    'bn2d': torch.nn.BatchNorm2d,
+    'layer_norm': torch.nn.LayerNorm,
+    'group_norm': torch.nn.GroupNorm,
+    'instance_norm_1d': torch.nn.InstanceNorm1d,
+    'instance_norm_2d': torch.nn.InstanceNorm2d,
 }
 
 OPTIMIZER_NAME_MAP = {

@@ -4,6 +4,25 @@ from datetime import datetime
 import torch
 
 
+def manual_seed(random_seed, device):
+        """
+        Set the environment for reproducibility purposes.
+        Args:
+            config (defaultdict): set of parameters
+                usage of:
+                    random seed (int):
+                    device (torch.device):
+        """
+        import random
+        import numpy as np
+        random.seed(random_seed)
+        np.random.seed(random_seed)
+        torch.manual_seed(random_seed)
+        if 'cuda' in device.type:
+            torch.cuda.empty_cache()
+            torch.cuda.manual_seed_all(random_seed)
+
+
 def adjust_evaluators(d1, dd2, denom, scope, phase):
     for evaluator_key in dd2:
         eval_key = str(evaluator_key).split('/')
