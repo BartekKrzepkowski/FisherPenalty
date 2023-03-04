@@ -2,6 +2,7 @@ from typing import List
 
 import torch
 
+from src.modules.architectures import aux_modules
 from src.utils import common
 
 
@@ -10,6 +11,41 @@ class MLP(torch.nn.Module):
         super().__init__()
         self.layers = torch.nn.ModuleList([
             torch.nn.Sequential(torch.nn.Linear(hidden_dim1, hidden_dim2), common.ACT_NAME_MAP[activation_name]())
+            for hidden_dim1, hidden_dim2 in zip(layers_dim[:-2], layers_dim[1:-1])
+        ])
+        self.final_layer = torch.nn.Linear(layers_dim[-2], layers_dim[-1])
+
+    def forward(self, x):
+        x = x.flatten(start_dim=1)
+        for layer in self.layers:
+            x = layer(x)
+        x = self.final_layer(x)
+        return x
+
+
+class MLP_scaled(torch.nn.Module):
+    def __init__(self, layers_dim: List[int], activation_name: str):
+        super().__init__()
+        self.layers = torch.nn.ModuleList([
+            torch.nn.Sequential(aux_modules.PreAct(hidden_dim1), torch.nn.Linear(hidden_dim1, hidden_dim2), common.ACT_NAME_MAP[activation_name]())
+            for hidden_dim1, hidden_dim2 in zip(layers_dim[:-2], layers_dim[1:-1])
+        ])
+        self.final_layer = torch.nn.Sequential(aux_modules.PreAct(layers_dim[-2]), torch.nn.Linear(layers_dim[-2], layers_dim[-1]))
+
+    def forward(self, x):
+        x = x.flatten(start_dim=1)
+        for layer in self.layers:
+            x = layer(x)
+        x = self.final_layer(x)
+        return x
+
+class MLPwithNorm(torch.nn.Module):
+    def __init__(self, layers_dim: List[int], activation_name: str, norm_name: str):
+        super().__init__()
+        self.layers = torch.nn.ModuleList([
+            torch.nn.Sequential(torch.nn.Linear(hidden_dim1, hidden_dim2),
+                                common.NORM_LAYER_NAME_MAP[norm_name](hidden_dim2),
+                                common.ACT_NAME_MAP[activation_name]())
             for hidden_dim1, hidden_dim2 in zip(layers_dim[:-2], layers_dim[1:-1])
         ])
         self.final_layer = torch.nn.Linear(layers_dim[-2], layers_dim[-1])
@@ -45,7 +81,7 @@ class SimpleCNN(torch.nn.Module):
         return x
 
 
-class SimpleCNNNorm(torch.nn.Module):
+class SimpleCNNwithNorm(torch.nn.Module):
     def __init__(self, layers_dim: List[int], activation_name: str, norm_name: str):
         super().__init__()
         # self.blocks = torch.nn.ModuleList([

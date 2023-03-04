@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import torch
 
-from src.utils.utils_optim import get_every_but_forbidden_parameter_names
+from src.utils.utils_optim import get_every_but_forbidden_parameter_names, FORBIDDEN_LAYER_TYPES
 from src.utils.utils_regularizers import get_desired_parameter_names
 
 
@@ -12,9 +12,7 @@ class FisherPenaly(torch.nn.Module):
         self.model = model
         self.criterion = criterion
         self.labels = torch.arange(num_classes).to(next(model.parameters()).device)
-        self.penalized_parameter_names = get_every_but_forbidden_parameter_names(self.model,
-                                                                                 [torch.nn.LayerNorm, torch.nn.Embedding,
-                                                                                  torch.nn.BatchNorm1d, torch.nn.BatchNorm2d])
+        self.penalized_parameter_names = get_every_but_forbidden_parameter_names(self.model, FORBIDDEN_LAYER_TYPES)
 
     def forward(self, y_pred):
         prob = torch.nn.functional.softmax(y_pred, dim=1)

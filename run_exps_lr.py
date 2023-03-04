@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from src.utils.prepare import prepare_model, prepare_loaders, prepare_criterion, prepare_optim_and_scheduler
@@ -7,35 +8,36 @@ from src.trainer.trainer_classification import TrainerClassification
 from src.trainer.trainer_context import TrainerContext
 
 
-def objective(hidden_layer_num):
+def objective(lr):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # model
+    hidden_layer_num = 3
     NUM_FEATURES = 32 * 32 * 3
     NUM_CLASSES = 10
     DIMS = [NUM_FEATURES] + [512] * hidden_layer_num + [NUM_CLASSES]
     # trainer & scheduler
-    FP = 1e-2
-    EXP_NAME = f'sgd_cifar10_mlp_bn1d_different_depth_{hidden_layer_num}_fp_{FP}'
-    EPOCHS = 300
+    FP = 0.0
+    EXP_NAME = f'sgd_cifar10_mlp_different_depth_{hidden_layer_num}_fp_{FP}_lr_{round(lr, 5)}_kaiming_normal_fan_in_initialization'
+    EPOCHS = 250
     GRAD_ACCUM_STEPS = 1
     CLIP_VALUE = 0.0
     RANDOM_SEED = 42
 
     # prepare params
     type_names = {
-        'model': 'mlp_with_norm',
+        'model': 'mlp',
         'criterion': 'fp',
         'dataset': 'cifar10',
         'optim': 'sgd',
         'scheduler': None
     }
     h_params_overall = {
-        'model': {'layers_dim': DIMS, 'activation_name': 'relu', 'norm_name': 'bn1d'},
+        'model': {'layers_dim': DIMS, 'activation_name': 'relu'},
         'criterion': {'model': None, 'general_criterion_name': 'ce', 'num_classes': NUM_CLASSES,
                       'whether_record_trace': True, 'fpw': FP},
         'dataset': {'dataset_path': 'data/', 'whether_aug': False},
         'loaders': {'batch_size': 128, 'pin_memory': True, 'num_workers': 4},
-        'optim': {'lr': 1e-2, 'momentum': 0.9, 'weight_decay': 0.0},
+        'optim': {'lr': lr, 'momentum': 0.9, 'weight_decay': 0.0},
         'scheduler': None,
         'type_names': type_names
     }
@@ -75,7 +77,7 @@ def objective(hidden_layer_num):
         base_path='reports',
         exp_name=EXP_NAME,
         logger_config={'logger_name': 'clearml', 'hyperparameters': h_params_overall,
-                       'project_name': 'mlp_different_depth',
+                       'project_name': 'mlp_different_depth_lr_search',
                        'access_key': 'N26DK2ZRB0M7O86K5209',
                        'secret_key': 'fvpTeylXmn84mNzGPsnLaK9GMSs08MUpiHRie3sWjJJZBkYwCN'},
         random_seed=RANDOM_SEED,
@@ -85,5 +87,5 @@ def objective(hidden_layer_num):
 
 
 if __name__ == "__main__":
-    for hidden_layer_num in range(1, 8):
-        objective(hidden_layer_num)
+    for lr in np.logspace(-4, 0, base=10, num=10):
+        objective(lr)

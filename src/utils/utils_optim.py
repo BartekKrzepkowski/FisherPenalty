@@ -21,8 +21,7 @@ def configure_optimizer(optim_wrapper, model, optim_kwargs):
     weight_decay = optim_kwargs['weight_decay']
     del optim_kwargs['weight_decay']
 
-    decay_parameters = get_every_but_forbidden_parameter_names(model, [torch.nn.LayerNorm, torch.nn.Embedding,
-                                                                       torch.nn.BatchNorm1d, torch.nn.BatchNorm2d])
+    decay_parameters = get_every_but_forbidden_parameter_names(model, FORBIDDEN_LAYER_TYPES)
     decay_parameters = [name for name in decay_parameters if "bias" not in name]
     optimizer_grouped_parameters = [
         {
@@ -40,3 +39,6 @@ def configure_optimizer(optim_wrapper, model, optim_kwargs):
 
 def clip_grad_norm(clip_grad_wrapper, model, clip_value):
     clip_grad_wrapper(filter(lambda p: p.requires_grad, model.parameters()), clip_value)
+
+
+FORBIDDEN_LAYER_TYPES = [torch.nn.Embedding, torch.nn.LayerNorm, torch.nn.BatchNorm1d, torch.nn.BatchNorm2d]

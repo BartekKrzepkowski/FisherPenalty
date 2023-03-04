@@ -2,7 +2,7 @@ import torch
 
 from src.data.datasets import get_mnist, get_cifar10, get_cifar100, get_tinyimagenet
 from src.modules.losses import ClassificationLoss, FisherPenaltyLoss
-from src.modules.architectures.models import MLP, SimpleCNN, SimpleCNNNorm
+from src.modules.architectures.models import MLP, SimpleCNN, MLPwithNorm, SimpleCNNwithNorm
 from src.modules.architectures.resnets import ResNet18, ResNet34
 from src.visualization.clearml_logger import ClearMLLogger
 from src.visualization.tensorboard_pytorch import TensorboardPyTorch
@@ -39,8 +39,9 @@ LOSS_NAME_MAP = {
 
 MODEL_NAME_MAP = {
     'mlp': MLP,
+    'mlp_with_norm': MLPwithNorm,
     'simple_cnn': SimpleCNN,
-    'simple_cnn_norm': SimpleCNNNorm,
+    'simple_cnn_with_norm': SimpleCNNwithNorm,
     'resnet18': ResNet18,
     'resnet34': ResNet34
 }

@@ -1,11 +1,13 @@
 from torch.utils.data import DataLoader
 
 from src.utils.common import DATASET_NAME_MAP, LOSS_NAME_MAP, MODEL_NAME_MAP, OPTIMIZER_NAME_MAP, SCHEDULER_NAME_MAP
+from src.utils.utils_model import init_with_kaiming_normal_fan_in
 from src.utils.utils_optim import configure_optimizer
 
 
 def prepare_model(model_name, model_params):
     model = MODEL_NAME_MAP[model_name](**model_params)
+    model.apply(init_with_kaiming_normal_fan_in)
     return model
 
 

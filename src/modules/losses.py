@@ -32,10 +32,11 @@ class FisherPenaltyLoss(torch.nn.Module):
         self.traces = None
 
     def forward(self, y_pred, y_true):
+        traces = {}
         loss, evaluators = self.criterion(y_pred, y_true)
         if self.whether_record_trace:# and self.regularizer.model.training:
             overall_trace, traces = self.regularizer(y_pred)
             evaluators['overall_trace'] = overall_trace.item()
-            if self.fpw:
+            if self.fpw > 0:
                 loss += self.fpw * overall_trace
         return loss, evaluators, traces
