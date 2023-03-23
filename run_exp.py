@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import torch
 
 from src.utils.prepare import prepare_model, prepare_loaders, prepare_criterion, prepare_optim_and_scheduler
@@ -35,7 +36,7 @@ def objective():
         'criterion': {'model': None, 'general_criterion_name': 'ce', 'num_classes': NUM_CLASSES,
                       'whether_record_trace': True, 'fpw': FP},
         'dataset': {'dataset_path': 'data/', 'whether_aug': False},
-        'loaders': {'batch_size': 512, 'pin_memory': True, 'num_workers': 4},
+        'loaders': {'batch_size': 512, 'pin_memory': True, 'num_workers': 2},
         'optim': {'lr': 1e-1, 'momentum': 0.9, 'weight_decay': 1e-2},
         'scheduler': {'eta_min': 1e-6, 'T_max': None},
         'type_names': type_names
