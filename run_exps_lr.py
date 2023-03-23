@@ -77,9 +77,7 @@ def objective(lr):
         base_path='reports',
         exp_name=EXP_NAME,
         logger_config={'logger_name': 'clearml', 'hyperparameters': h_params_overall,
-                       'project_name': 'mlp_different_depth_lr_search',
-                       'access_key': 'N26DK2ZRB0M7O86K5209',
-                       'secret_key': 'fvpTeylXmn84mNzGPsnLaK9GMSs08MUpiHRie3sWjJJZBkYwCN'},
+                       'project_name': 'mlp_different_depth_lr_search'},
         random_seed=RANDOM_SEED,
         device=device
     )

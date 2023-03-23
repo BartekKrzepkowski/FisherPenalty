@@ -11,8 +11,8 @@ class ClearMLLogger:
             'web_host': 'https://app.clear.ml',
             'api_host': 'https://api.clear.ml',
             'files_host': 'https://files.clear.ml',
-            "key": config.logger_config['access_key'],
-            "secret": config.logger_config['secret_key']
+            "key": os.environ['CLEARML_ACCESS_KEY'],
+            "secret": os.environ['CLEARML_SECRET_KEY']
         }
         if not os.path.isdir(config.logger_config['log_dir']):
             os.makedirs(config.logger_config['log_dir'])

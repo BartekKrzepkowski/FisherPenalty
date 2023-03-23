@@ -1,7 +1,7 @@
 import torch
 
 from src.modules.metrics import acc_metric
-from src.modules.regularizers import FisherPenaly
+from src.modules.regularizers import FisherPenaly, BatchGradCovariancePenalty
 from src.utils import common
 
 
@@ -40,3 +40,21 @@ class FisherPenaltyLoss(torch.nn.Module):
             if self.fpw > 0:
                 loss += self.fpw * overall_trace
         return loss, evaluators, traces
+    
+
+class BatchGradCovarianceLoss(torch.nn.Module):
+    def __init__(self, model, loader, general_criterion_name, bgcw=0.0, n=10):
+        super().__init__()
+        self.criterion = ClassificationLoss(common.LOSS_NAME_MAP[general_criterion_name]())
+        self.regularizer = BatchGradCovariancePenalty(model, loader, common.LOSS_NAME_MAP[general_criterion_name])
+        self.bgcw = bgcw
+        self.n = n
+
+    def forward(self, y_pred, y_true):
+        loss, evaluators = self.criterion(y_pred, y_true)
+        if self.whether_record_logdet:
+            log_det = self.regularizer(self.n)
+            evaluators['bgc_log_det'] = log_det.item()
+            if self.bgcw > 0:
+                loss += self.fpw * log_det
+        return loss, evaluators

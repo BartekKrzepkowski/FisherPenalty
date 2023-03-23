@@ -45,3 +45,41 @@ class FisherPenaly(torch.nn.Module):
                 if isinstance(module, tuple(module_type)):
                     module_specific_parameter_names = [f'{name}.{n}' for n in module._parameters.keys()]
                     grouped_parameter_names[module_type.__name__] += module_specific_parameter_names
+
+
+class BatchGradCovariancePenalty(torch.nn.Module):
+    def __init__(self, model, loader, criterion) -> None:
+        self.model = model
+        self.criterion = criterion
+        self.loader = loader
+        self.device = next(model.parameters()).device
+    
+    def forward(self, n):
+        K = self.calc_covariance(n)
+        log_det = torch.logdet(K)
+        return log_det
+
+    def calc_covariance(self, n):
+        gs = torch.tensor(self.gather_gradients(n))
+        gs_mean = gs.mean(axis=0)
+        K = 1 / n * (gs - gs_mean).T @ (gs - gs_mean)
+        return K
+
+    def gather_gradients(self, n):
+        batch_grads = []        
+        for i, (x_true, y_true) in enumerate(self.loader):
+            if i >= n: break
+            x_true, y_true = x_true.to(self.device), y_true.to(self.device)
+            y_pred = self.model(x_true)
+            loss = self.criterion(y_pred, y_true)
+            params_names, params = zip(*[(n, p) for n, p in self.model.named_parameters() if p.requires_grad])
+            grads = torch.autograd.grad(
+                loss,
+                params,
+                retain_graph=True,
+                create_graph=True,)
+            _grads = [grad for grad in grads if grad is not None]
+            assert len(_grads) == len(grads)
+            # TODO: split by module
+            batch_grads.append(torch.tensor(grads).flatten())
+        

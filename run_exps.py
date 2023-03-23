@@ -34,9 +34,9 @@ def objective(hidden_layer_num):
         'criterion': {'model': None, 'general_criterion_name': 'ce', 'num_classes': NUM_CLASSES,
                       'whether_record_trace': True, 'fpw': FP},
         'dataset': {'dataset_path': 'data/', 'whether_aug': False},
-        'loaders': {'batch_size': 128, 'pin_memory': True, 'num_workers': 4},
-        'optim': {'lr': 1e-2, 'momentum': 0.9, 'weight_decay': 0.0},
-        'scheduler': None,
+        'loaders': {'batch_size': 100, 'pin_memory': True, 'num_workers': 4},
+        'optim': {'lr': 5e-3, 'momentum': 0.9, 'weight_decay': 1e-2},
+        'scheduler': {'eta_min': 1e-6},
         'type_names': type_names
     }
     # set seed to reproduce the results in the future
@@ -49,7 +49,8 @@ def objective(hidden_layer_num):
     # prepare loaders
     loaders = prepare_loaders(type_names['dataset'], h_params_overall['dataset'], h_params_overall['loaders'])
     # prepare optimizer & scheduler
-    T_max = 0  # (len(loaders['train']) // GRAD_ACCUM_STEPS) * EPOCHS
+    T_max = (len(loaders['train']) // GRAD_ACCUM_STEPS) * EPOCHS
+    h_params_overall['scheduler']['T_max'] = T_max
     optim, lr_scheduler = prepare_optim_and_scheduler(model, type_names['optim'], h_params_overall['optim'],
                                                       type_names['scheduler'], h_params_overall['scheduler'])
 
@@ -64,7 +65,7 @@ def objective(hidden_layer_num):
     trainer = TrainerClassification(**params_trainer)
 
     # prepare run
-    # params_names = [n for n, p in model.named_parameters() if p.requires_grad]
+    params_names = [n for n, p in model.named_parameters() if p.requires_grad]
     config = TrainerContext(
         epoch_start_at=0,
         epoch_end_at=EPOCHS,
@@ -74,10 +75,10 @@ def objective(hidden_layer_num):
         clip_value=CLIP_VALUE,
         base_path='reports',
         exp_name=EXP_NAME,
-        logger_config={'logger_name': 'clearml', 'hyperparameters': h_params_overall,
-                       'project_name': 'mlp_different_depth',
-                       'access_key': 'N26DK2ZRB0M7O86K5209',
-                       'secret_key': 'fvpTeylXmn84mNzGPsnLaK9GMSs08MUpiHRie3sWjJJZBkYwCN'},
+        logger_config={'logger_name': 'tensorboard', 'project_name': 'mlp_different_depth',
+                       'hyperparameters': h_params_overall, 'whether_use_wandb': True,
+                       'layout': ee_tensorboard_layout(params_names), 'mode': 'online'
+                       },
         random_seed=RANDOM_SEED,
         device=device
     )
@@ -85,5 +86,5 @@ def objective(hidden_layer_num):
 
 
 if __name__ == "__main__":
-    for hidden_layer_num in range(1, 8):
+    for hidden_layer_num in range(2, 8):
         objective(hidden_layer_num)
