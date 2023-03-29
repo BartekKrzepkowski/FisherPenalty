@@ -82,7 +82,7 @@ def objective(lr, wd):
         clip_value=CLIP_VALUE,
         base_path='reports',
         exp_name=EXP_NAME,
-        logger_config={'logger_name': 'tensorboard', 'project_name': PROJECT_NAME, 'entity': 'ideas_cv',
+        logger_config={'logger_name': 'tensorboard', 'project_name': PROJECT_NAME, 'entity': ENTITY,
                        'hyperparameters': h_params_overall, 'whether_use_wandb': True,
                        'layout': ee_tensorboard_layout(params_names), 'mode': 'online'
                        },
