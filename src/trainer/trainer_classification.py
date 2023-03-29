@@ -41,7 +41,7 @@ class TrainerClassification:
         self.manual_seed(config)
         self.at_exp_start(config)
         for epoch in trange(config.epoch_start_at, config.epoch_end_at, desc='run_exp',
-                            leave=True, position=0, colour='green'):
+                            leave=True, position=0, colour='green', disable=True, disable=config.whether_disable_tqdm):
             self.epoch = epoch
             self.model.train()
             self.run_epoch(phase='train', config=config)
@@ -79,7 +79,7 @@ class TrainerClassification:
         }
         loader_size = len(self.loaders[phase])
         progress_bar = tqdm(self.loaders[phase], desc=f'run_epoch: {phase}',
-                            leave=False, position=1, total=loader_size, colour='red')
+                            leave=False, position=1, total=loader_size, colour='red', disable=config.whether_disable_tqdm)
         self.global_step = self.epoch * loader_size
         for i, data in enumerate(progress_bar):
             self.global_step += 1
@@ -137,7 +137,7 @@ class TrainerClassification:
         evaluators_log = adjust_evaluators_pre_log(assets['evaluators'], assets['denom'], round_at=4)
         evaluators_log[f'steps/{phase}_{scope}'] = step
         self.logger.log_scalars(evaluators_log, step)
-        progress_bar.set_postfix(evaluators_log)
+        # progress_bar.set_postfix(evaluators_log)
 
         traces_log = adjust_evaluators_pre_log(assets['traces'], assets['denom'], round_at=4)
         self.logger.log_scalars(traces_log, global_step=step)

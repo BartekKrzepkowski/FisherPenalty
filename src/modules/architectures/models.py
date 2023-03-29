@@ -1,8 +1,9 @@
-from typing import List
+from typing import List, Dict, Any
 
 import torch
 
 from src.modules.architectures import aux_modules
+from src.utils.utils_model import infer_flatten_dim
 from src.utils import common
 
 
@@ -59,19 +60,20 @@ class MLPwithNorm(torch.nn.Module):
 
 
 class SimpleCNN(torch.nn.Module):
-    def __init__(self, layers_dim: List[int], activation_name: str):
+    def __init__(self, layers_dim: List[int], activation_name: str, conv_params: Dict[str, Any]):
         super().__init__()
         self.blocks = torch.nn.ModuleList([
-            torch.nn.Sequential(torch.nn.Conv2d(layer_dim1, layer_dim2, 3, padding='same'),
+            torch.nn.Sequential(torch.nn.Conv2d(layer_dim1, layer_dim2, 3, padding=1),
                                 common.ACT_NAME_MAP[activation_name](),
-                                torch.nn.Conv2d(layer_dim2, layer_dim2, 3, padding='same'),
+                                torch.nn.Conv2d(layer_dim2, layer_dim2, 3, padding=1),
                                 common.ACT_NAME_MAP[activation_name](),
                                 torch.nn.MaxPool2d(2, 2))
             for layer_dim1, layer_dim2 in zip(layers_dim[:-3], layers_dim[1:-2])
         ])
+        flatten_dim = infer_flatten_dim(conv_params, layers_dim[-3])
         # napisz wnioskowanie spłaszczonego wymiaru
-        self.final_layer = torch.nn.Sequential(torch.nn.Linear(1024, 128), common.ACT_NAME_MAP[activation_name](),
-                                               torch.nn.Linear(128, 10))
+        self.final_layer = torch.nn.Sequential(torch.nn.Linear(flatten_dim, layers_dim[-2]), common.ACT_NAME_MAP[activation_name](),
+                                               torch.nn.Linear(layers_dim[-2], layers_dim[-1]))
 
     def forward(self, x):
         for block in self.blocks:
@@ -127,3 +129,4 @@ class SimpleCNNwithNorm(torch.nn.Module):
         x = x.flatten(start_dim=1)
         x = self.final_layer(x)
         return x
+

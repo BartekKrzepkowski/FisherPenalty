@@ -10,7 +10,7 @@ class TensorboardPyTorch:
         if self.whether_use_wandb:
             wandb.login(key=os.environ['WANDB_API_KEY'])
             wandb.init(
-                entity=os.environ['WANDB_ENTITY'],
+                entity=config.logger_config['entity'] if config.logger_config['entity'] else os.environ['WANDB_ENTITY'],
                 project=config.logger_config['project_name'],
                 name=config.exp_name,
                 config=config.logger_config['hyperparameters'],

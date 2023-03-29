@@ -25,3 +25,22 @@ class WeightInit():
             INIT_MAP_NAMES[self.modules_to_init['linear']['bias']](m)
 
 INIT_MAP_NAMES = {}
+
+
+def infer_height_and_width_before_flatten(height, width, whether_pooling, kernels, strides, paddings):
+    if len(paddings) != 0:
+        height = (height - kernels[0] + 2 * paddings[0]) // strides[0] + 1
+        width = (width - kernels[0] + 2 * paddings[0]) // strides[0] + 1
+        if whether_pooling[0]:
+            height /= 2
+            width /= 2
+        (height, width) = infer_height_and_width_before_flatten(height, width, whether_pooling[1:],
+                                                                kernels[1:], strides[1:], paddings[1:])
+    return (height, width)
+
+
+def infer_flatten_dim(conv_params, out_channels):
+    height, width = infer_height_and_width_before_flatten(conv_params['img_height'], conv_params['img_widht'],
+                                                          conv_params['whether_pooling'], conv_params['kernels'],
+                                                          conv_params['strides'], conv_params['paddings'])
+    return int(height * width * out_channels)
