@@ -1,9 +1,10 @@
 #!/bin/bash
+##ENTROPY
 #SBATCH --job-name=test
 #SBATCH --gpus=1
 #SBATCH --qos=1gpu2d
-#SBATCH --cpus-per-task=4  
-#SBATCH --mem-per-cpu=2G
+#SBATCH --cpus-per-task=8  
+#SBATCH --mem-per-cpu=3G
 #SBATCH --partition=common
 #SBATCH --time=2-0
 

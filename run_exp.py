@@ -20,12 +20,13 @@ def objective(lr, wd):
     CONV_PARAMS = {'img_height': 32, 'img_widht': 32, 'kernels': [3,3,3,3], 'strides': [1,1,1,1], 'paddings': [1,1,1,1], 'whether_pooling': [False,True,False,True]}
     # trainer & scheduler
     RANDOM_SEED = 42
-    EPOCHS = 200
+    EPOCHS = 300
     GRAD_ACCUM_STEPS = 1
     CLIP_VALUE = 0.0
     FP = 0.0
     EXP_NAME = f'sgd_cifar10_cnn_depth_{2}_fp_{FP}_lr_{lr}_wd_{wd}'
     PROJECT_NAME = 'Critical_Periods_lr'
+    ENTITY = 'ideas_cv'
 
     # prepare params
     type_names = {
@@ -40,7 +41,7 @@ def objective(lr, wd):
         'criterion': {'model': None, 'general_criterion_name': 'ce', 'num_classes': NUM_CLASSES,
                       'whether_record_trace': True, 'fpw': FP},
         'dataset': {'dataset_path': 'data/', 'whether_aug': False},
-        'loaders': {'batch_size': 256, 'pin_memory': True, 'num_workers': 4},
+        'loaders': {'batch_size': 256, 'pin_memory': True, 'num_workers': 8},
         'optim': {'lr': lr, 'momentum': 0.9, 'weight_decay': wd},
         'scheduler': {'eta_min': 1e-6, 'T_max': None},
         'type_names': type_names
@@ -95,5 +96,4 @@ def objective(lr, wd):
 
 if __name__ == "__main__":
     for lr in [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]:
-        for wd in [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]:
-            objective(lr, wd)
+        objective(lr, 0.0)

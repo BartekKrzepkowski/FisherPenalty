@@ -41,7 +41,7 @@ class TrainerClassification:
         self.manual_seed(config)
         self.at_exp_start(config)
         for epoch in trange(config.epoch_start_at, config.epoch_end_at, desc='run_exp',
-                            leave=True, position=0, colour='green', disable=True, disable=config.whether_disable_tqdm):
+                            leave=True, position=0, colour='green', disable=config.whether_disable_tqdm):
             self.epoch = epoch
             self.model.train()
             self.run_epoch(phase='train', config=config)

@@ -17,6 +17,8 @@ class TensorboardPyTorch:
                 dir=config.logger_config['log_dir'],
                 mode=config.logger_config['mode']
             )
+            if len(wandb.patched["tensorboard"]) > 0:
+                wandb.tensorboard.unpatch()
             wandb.tensorboard.patch(root_logdir=config.logger_config['log_dir'], pytorch=True, save=False)
             
         self.writer = SummaryWriter(log_dir=config.logger_config['log_dir'], flush_secs=60)

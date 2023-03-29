@@ -15,5 +15,6 @@ class TrainerContext:
     base_path: str = None,
     exp_name: str = None,
     logger_config: Dict = None,
+    whether_disable_tqdm: bool = None,
     random_seed: int = None,
     device: torch.device = None
