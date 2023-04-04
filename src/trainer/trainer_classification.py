@@ -4,6 +4,7 @@ from typing import Dict
 import torch
 from tqdm import tqdm, trange
 
+from src.modules.metrics import BatchVariance
 from src.utils.common import LOGGERS_NAME_MAP
 from src.utils.utils_trainer import adjust_evaluators, adjust_evaluators_pre_log, create_paths, save_model
 from src.utils.utils_optim import clip_grad_norm
@@ -22,6 +23,8 @@ class TrainerClassification:
         self.save_path = None
         self.epoch = None
         self.global_step = None
+
+        self.batch_variance = BatchVariance(model, optim)
 
     def run_exp(self, config):
         """
@@ -99,11 +102,16 @@ class TrainerClassification:
                     if config.clip_value > 0:
                         clip_grad_norm(torch.nn.utils.clip_grad_norm, self.model, config.clip_value)
                     self.optim.step()
+                    step_assets['evaluators'] = self.batch_variance(step_assets['evaluators'], 'l2')
                     if self.lr_scheduler is not None:
                         self.lr_scheduler.step()
                     self.optim.zero_grad()
+                else:
+                    norm = self.batch_variance.model_gradient_norm()
+                    step_assets['evaluators']['grad_norm_squared'] = norm ** 2
                 loss *= config.grad_accum_steps
 
+            ### LOGGING ###
             running_assets = self.update_assets(running_assets, step_assets, step_assets['denom'], 'running', phase)
 
             whether_save_model = config.save_multi and (i + 1) % (config.grad_accum_steps * config.save_multi) == 0
@@ -137,7 +145,7 @@ class TrainerClassification:
         evaluators_log = adjust_evaluators_pre_log(assets['evaluators'], assets['denom'], round_at=4)
         evaluators_log[f'steps/{phase}_{scope}'] = step
         self.logger.log_scalars(evaluators_log, step)
-        # progress_bar.set_postfix(evaluators_log)
+        progress_bar.set_postfix(evaluators_log)
 
         traces_log = adjust_evaluators_pre_log(assets['traces'], assets['denom'], round_at=4)
         self.logger.log_scalars(traces_log, global_step=step)

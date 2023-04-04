@@ -15,7 +15,8 @@ class TensorboardPyTorch:
                 name=config.exp_name,
                 config=config.logger_config['hyperparameters'],
                 dir=config.logger_config['log_dir'],
-                mode=config.logger_config['mode']
+                mode=config.logger_config['mode'],
+                group=config.logger_config['group'],
             )
             if len(wandb.patched["tensorboard"]) > 0:
                 wandb.tensorboard.unpatch()

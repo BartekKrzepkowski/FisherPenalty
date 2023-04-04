@@ -1,14 +1,14 @@
 #!/bin/bash
-##ENTROPY
-#SBATCH --job-name=test
+##DGX
+#SBATCH --job-name=fisher_penalty
 #SBATCH --gpus=1
-#SBATCH --qos=1gpu2d
-#SBATCH --cpus-per-task=8  
-#SBATCH --mem-per-cpu=3G
-#SBATCH --partition=common
+#SBATCH --cpus-per-task=8
+#SBATCH --mem-per-cpu=2G
+#SBATCH --partition=batch
 #SBATCH --time=2-0
+#SBATCH --output=slurm-%j.out
 
 source $HOME/anaconda3/etc/profile.d/conda.sh
-conda activate $HOME/anaconda3/envs/fp
+conda activate $HOME/anaconda3/envs/fp2
 
-python3 -u run_exp.py
+WANDB__SERVICE_WAIT=300 python3 -u run_exp.py

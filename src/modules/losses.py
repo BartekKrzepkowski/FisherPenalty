@@ -58,3 +58,17 @@ class BatchGradCovarianceLoss(torch.nn.Module):
             if self.bgcw > 0:
                 loss += self.fpw * log_det
         return loss, evaluators
+
+
+class MSESoftmaxLoss(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.criterion = torch.nn.MSELoss()
+   
+
+    def forward(self, y_pred, y_true):
+        y_true = torch.nn.functional.one_hot(y_true, num_classes=10).float()
+        y_pred = torch.nn.functional.softmax(y_pred, dim=1)
+        loss = self.criterion(y_pred, y_true)
+        return loss

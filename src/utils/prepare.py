@@ -7,7 +7,7 @@ from src.utils.utils_optim import configure_optimizer
 
 def prepare_model(model_name, model_params):
     model = MODEL_NAME_MAP[model_name](**model_params)
-    model.apply(init_with_kaiming_normal_fan_in)
+    # model.apply(init_with_kaiming_normal_fan_in)
     return model
 
 
