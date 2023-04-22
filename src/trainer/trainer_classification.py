@@ -51,6 +51,7 @@ class TrainerClassification:
             self.model.eval()
             # with torch.no_grad():
             self.run_epoch(phase='test', config=config)
+            
         self.logger.close()
         save_model(self.model, self.save_path(self.global_step))
 
@@ -102,13 +103,15 @@ class TrainerClassification:
                     if config.clip_value > 0:
                         clip_grad_norm(torch.nn.utils.clip_grad_norm, self.model, config.clip_value)
                     self.optim.step()
-                    step_assets['evaluators'] = self.batch_variance(step_assets['evaluators'], 'l2')
+                    if self.batch_variance is not None:
+                        step_assets['evaluators'] = self.batch_variance(step_assets['evaluators'], 'l2')
                     if self.lr_scheduler is not None:
                         self.lr_scheduler.step()
                     self.optim.zero_grad()
                 else:
-                    norm = self.batch_variance.model_gradient_norm()
-                    step_assets['evaluators']['grad_norm_squared'] = norm ** 2
+                    if self.batch_variance is not None:
+                        norm = self.batch_variance.model_gradient_norm()
+                        step_assets['evaluators']['grad_norm_squared'] = norm ** 2
                 loss *= config.grad_accum_steps
 
             ### LOGGING ###

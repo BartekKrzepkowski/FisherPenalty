@@ -1,6 +1,6 @@
 import torch
 
-from src.modules.metrics import acc_metric
+from src.modules.metrics import acc_metric, entropy_loss
 from src.modules.regularizers import FisherPenaly, BatchGradCovariancePenalty
 from src.utils import common
 
@@ -21,12 +21,13 @@ class ClassificationLoss(torch.nn.Module):
 
 
 class FisherPenaltyLoss(torch.nn.Module):
-    def __init__(self, model, general_criterion_name, num_classes, whether_record_trace=False, fpw=0.0):
+    def __init__(self, model, general_criterion_name, num_classes, whether_record_trace=False, fpw=0.0, entropy_weight=0.0):
         super().__init__()
         self.criterion = ClassificationLoss(common.LOSS_NAME_MAP[general_criterion_name]())
         self.regularizer = FisherPenaly(model, common.LOSS_NAME_MAP[general_criterion_name](), num_classes)
         self.whether_record_trace = whether_record_trace
         self.fpw = fpw
+        self.entropy_weight = entropy_weight
         #przygotowanie do logowania co n kroków
         self.overall_trace_buffer = None
         self.traces = None
@@ -39,6 +40,8 @@ class FisherPenaltyLoss(torch.nn.Module):
             evaluators['overall_trace'] = overall_trace.item()
             if self.fpw > 0:
                 loss += self.fpw * overall_trace
+            if self.entropy_weight > 0:
+                loss += self.entropy_weight * (torch.log(torch.tensor(y_pred.shape[1])) - entropy_loss(y_pred))
         return loss, evaluators, traces
     
 

@@ -1,4 +1,8 @@
+import warnings
+from collections import Counter
+
 import torch
+from torch.optim.lr_scheduler import LRScheduler
 
 
 def get_every_but_forbidden_parameter_names(model, forbidden_layer_types):
@@ -42,3 +46,46 @@ def clip_grad_norm(clip_grad_wrapper, model, clip_value):
 
 
 FORBIDDEN_LAYER_TYPES = [torch.nn.Embedding, torch.nn.LayerNorm, torch.nn.BatchNorm1d, torch.nn.BatchNorm2d]
+
+
+class MultiStepwithDoubleLinearWarmup(LRScheduler):
+    def __init__(self, optimizer, milestones=[], gamma=1e-1,eta_max=None, eta_medium=0.0, eta_min=0.0, warmup_iters2=0, inter_warmups_iters=0, warmup_iters1=0, last_epoch=-1,
+                 verbose=False):
+        assert eta_max >= eta_medium >= eta_min >= 0.0, 'sa'
+        self.milestones = Counter(milestones)
+        self.gamma = gamma
+        self.eta_max = eta_max
+        self.eta_medium = eta_medium
+        self.eta_min = eta_min
+        self.warmup_iters2 = warmup_iters2
+        self.inter_warmups_iters = inter_warmups_iters
+        self.warmup_iters1 = warmup_iters1
+        if eta_min > 0.0:
+            for groups in optimizer.param_groups:
+                groups['lr'] = eta_min
+        elif eta_medium > 0.0:
+            for groups in optimizer.param_groups:
+                groups['lr'] = eta_medium
+        elif eta_max == 0.0:
+            raise ValueError('eta_max must be greater than 0.0')
+        super().__init__(optimizer, last_epoch, verbose)
+
+    def get_lr(self):
+        if not self._get_lr_called_within_step:
+            warnings.warn("To get the last learning rate computed by the scheduler, "
+                          "please use `get_last_lr()`.", UserWarning)
+
+        if self.last_epoch == 0 or self.warmup_iters1 < self.last_epoch <= self.warmup_iters1 + self.inter_warmups_iters:
+            return [group['lr'] for group in self.optimizer.param_groups]
+
+        if self.last_epoch <= self.warmup_iters1:
+            return [self.eta_min + (self.eta_medium - self.eta_min) * self.last_epoch / self.warmup_iters1
+                    for _ in self.optimizer.param_groups]
+        
+        if self.last_epoch <= self.warmup_iters1 + self.inter_warmups_iters + self.warmup_iters2:
+            return [self.eta_medium + (self.eta_max - self.eta_medium) * (self.last_epoch-(self.warmup_iters1 + self.inter_warmups_iters)) / self.warmup_iters2
+                    for _ in self.optimizer.param_groups]
+        if self.last_epoch not in self.milestones:
+            return [group['lr'] for group in self.optimizer.param_groups]
+        return [group['lr'] * self.gamma ** self.milestones[self.last_epoch]
+                for group in self.optimizer.param_groups]

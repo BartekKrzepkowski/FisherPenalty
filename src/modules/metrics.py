@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 import torch
+from pyhessian import hessian
 
 
 def acc_metric(y_pred, y_true):
@@ -14,13 +15,20 @@ def prepare_evaluators(y_pred, y_true, loss):
     evaluators = {'loss': loss.item(), 'acc': acc}
     return evaluators
 
+def entropy_loss(y_pred):
+    return -torch.sum(torch.nn.functional.softmax(y_pred, dim=1) * torch.log_softmax(y_pred, dim=1))
+
 
 class BatchVariance(torch.nn.Module):
-    def __init__(self, model, optim):
+    def __init__(self, model, optim, criterion=None, dataloader=None, device=None):
         super().__init__()
         self.model_zero = deepcopy(model)
         self.model = model
         self.optim = optim
+        self.criterion = criterion
+        # held out % examples from dataloader
+        self.dataloader = dataloader
+        self.device = device
         self.model_trajectory_length = 0.0
 
     def forward(self, evaluators, distance_type):
@@ -69,6 +77,12 @@ class BatchVariance(torch.nn.Module):
         else:
             raise ValueError(f'Distance type {distance_type} not supported.')
         return distance
+    
+    def sharpness(self, dataloader, maxIter=100):
+        hessian_comp = hessian(self.model, self.criterion, dataloader=dataloader, cuda=self.device.type!='cpu')
+        top_eigenvalues, _ = hessian_comp.eigenvalues(maxIter=maxIter)
+        self.model.train()
+        return top_eigenvalues[0].item()
 
 
 class CosineAlignments:
